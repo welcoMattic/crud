@@ -11,7 +11,7 @@
       <small>{{ trans('backpack::crud.all') }} <span class="text-lowercase">{{ $crud->entity_name_plural }}</span> {{ trans('backpack::crud.in_the_database') }}.</small>
     </h1>
     <ol class="breadcrumb">
-      <li><a href="{{ url('admin/dashboard') }}">{{ trans('backpack::crud.admin') }}</a></li>
+      <li><a href="{{ url(config('backpack.base.route_prefix'), 'dashboard') }}">{{ trans('backpack::crud.admin') }}</a></li>
       <li><a href="{{ url($crud->route) }}" class="text-capitalize">{{ $crud->entity_name_plural }}</a></li>
       <li class="active">{{ trans('backpack::crud.reorder') }}</li>
     </ol>
@@ -28,13 +28,13 @@
       $entry->tree_element_shown = true;
 
       // show the tree element
-      echo '<li id="list_'.$entry->id.'">';
+      echo '<li id="list_'.$entry->getKey().'">';
       echo '<div><span class="disclose"><span></span></span>'.$entry->{$crud->reorder_label}.'</div>';
 
       // see if this element has any children
       $children = [];
       foreach ($all_entries as $key => $subentry) {
-        if ($subentry->parent_id == $entry->id) {
+        if ($subentry->parent_id == $entry->getKey()) {
           $children[] = $subentry;
         }
       }
@@ -45,7 +45,7 @@
       if (count($children)) {
         echo '<ol>';
         foreach ($children as $key => $child) {
-          $children[$key] = tree_element($child, $child->id, $all_entries, $crud);
+          $children[$key] = tree_element($child, $child->getKey(), $all_entries, $crud);
         }
         echo '</ol>';
       }
@@ -73,7 +73,7 @@
 
           <ol class="sortable">
             <?php
-              $all_entries = collect($entries->all())->sortBy('lft')->keyBy('id');
+              $all_entries = collect($entries->all())->sortBy('lft')->keyBy($crud->getModel()->getKeyName());
               $root_entries = $all_entries->filter(function($item) {
                 return $item->parent_id == 0;
               });

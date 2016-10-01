@@ -4,6 +4,7 @@ namespace Backpack\CRUD;
 
 use DB;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 
 trait CrudTrait
 {
@@ -16,13 +17,11 @@ trait CrudTrait
     public static function getPossibleEnumValues($field_name)
     {
         $instance = new static(); // create an instance of the model to be able to get the table name
-        $type = DB::select(DB::raw('SHOW COLUMNS FROM '.$instance->getTable().' WHERE Field = "'.$field_name.'"'))[0]->Type;
+        $type = DB::select(DB::raw('SHOW COLUMNS FROM '.Config::get('database.connections.'.env('DB_CONNECTION').'.prefix').$instance->getTable().' WHERE Field = "'.$field_name.'"'))[0]->Type;
         preg_match('/^enum\((.*)\)$/', $type, $matches);
         $enum = [];
-        $exploded = explode(',', $matches[1]);
-        foreach ($exploded as $value) {
-            $v = trim($value, "'");
-            $enum[] = $v;
+        foreach (explode(',', $matches[1]) as $value) {
+            $enum[] = trim($value, "'");
         }
 
         return $enum;
@@ -31,9 +30,9 @@ trait CrudTrait
     public static function isColumnNullable($column_name)
     {
         $instance = new static(); // create an instance of the model to be able to get the table name
-        $answer = DB::select(DB::raw("SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='".$instance->getTable()."' AND COLUMN_NAME='".$column_name."' AND table_schema='".env('DB_DATABASE')."'"))[0];
+        $answer = DB::select(DB::raw("SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='".Config::get('database.connections.'.env('DB_CONNECTION').'.prefix').$instance->getTable()."' AND COLUMN_NAME='".$column_name."' AND table_schema='".env('DB_DATABASE')."'"))[0];
 
-        return $answer->IS_NULLABLE == 'YES' ? true : false;
+        return $answer->IS_NULLABLE === 'YES';
     }
 
     /*
@@ -76,15 +75,117 @@ trait CrudTrait
         $model = '\\'.get_class($this);
 
         if (! count($columns)) {
-            if (property_exists($model, 'fakeColumns')) {
-                $columns = $this->fakeColumns;
-            } else {
-                $columns = ['extras'];
-            }
+            $columns = (property_exists($model, 'fakeColumns')) ? $this->fakeColumns : ['extras'];
         }
 
         $this->addFakes($columns);
 
         return $this;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Methods for storing uploaded files (used in CRUD).
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Handle file upload and DB storage for a file:
+     * - on CREATE
+     *     - stores the file at the destination path
+     *     - generates a name
+     *     - stores the full path in the DB;
+     * - on UPDATE
+     *     - if the value is null, deletes the file and sets null in the DB
+     *     - if the value is different, stores the different file and updates DB value.
+     *
+     * @param  [type] $value            Value for that column sent from the input.
+     * @param  [type] $attribute_name   Model attribute name (and column in the db).
+     * @param  [type] $disk             Filesystem disk used to store files.
+     * @param  [type] $destination_path Path in disk where to store the files.
+     */
+    public function uploadFileToDisk($value, $attribute_name, $disk, $destination_path)
+    {
+        $request = \Request::instance();
+
+        // if a new file is uploaded, delete the file from the disk
+        if ($request->hasFile($attribute_name) &&
+            $this->{$attribute_name} &&
+            $this->{$attribute_name} != null) {
+            \Storage::disk($disk)->delete($this->{$attribute_name});
+            $this->attributes[$attribute_name] = null;
+        }
+
+        // if the file input is empty, delete the file from the disk
+        if (is_null($value) && $this->{$attribute_name} != null) {
+            \Storage::disk($disk)->delete($this->{$attribute_name});
+            $this->attributes[$attribute_name] = null;
+        }
+
+        // if a new file is uploaded, store it on disk and its filename in the database
+        if ($request->hasFile($attribute_name) && $request->file($attribute_name)->isValid()) {
+
+            // 1. Generate a new file name
+            $file = $request->file($attribute_name);
+            $new_file_name = md5($file->getClientOriginalName().time()).'.'.$file->getClientOriginalExtension();
+
+            // 2. Move the new file to the correct path
+            $file_path = $file->storeAs($destination_path, $new_file_name, $disk);
+
+            // 3. Save the complete path to the database
+            $this->attributes[$attribute_name] = $file_path;
+        }
+    }
+
+    /**
+     * Handle multiple file upload and DB storage:
+     * - if files are sent
+     *     - stores the files at the destination path
+     *     - generates random names
+     *     - stores the full path in the DB, as JSON array;
+     * - if a hidden input is sent to clear one or more files
+     *     - deletes the file
+     *     - removes that file from the DB.
+     *
+     * @param  [type] $value            Value for that column sent from the input.
+     * @param  [type] $attribute_name   Model attribute name (and column in the db).
+     * @param  [type] $disk             Filesystem disk used to store files.
+     * @param  [type] $destination_path Path in disk where to store the files.
+     */
+    public function uploadMultipleFilesToDisk($value, $attribute_name, $disk, $destination_path)
+    {
+        $request = \Request::instance();
+        $attribute_value = (array) $this->{$attribute_name};
+        $files_to_clear = $request->get('clear_'.$attribute_name);
+
+        // if a file has been marked for removal,
+        // delete it from the disk and from the db
+        if ($files_to_clear) {
+            $attribute_value = (array) $this->{$attribute_name};
+            foreach ($files_to_clear as $key => $filename) {
+                \Storage::disk($disk)->delete($filename);
+                $attribute_value = array_where($attribute_value, function ($value, $key) use ($filename) {
+                    return $value != $filename;
+                });
+            }
+        }
+
+        // if a new file is uploaded, store it on disk and its filename in the database
+        if ($request->hasFile($attribute_name)) {
+            foreach ($request->file($attribute_name) as $file) {
+                if ($file->isValid()) {
+                    // 1. Generate a new file name
+                    $new_file_name = md5($file->getClientOriginalName().time()).'.'.$file->getClientOriginalExtension();
+
+                    // 2. Move the new file to the correct path
+                    $file_path = $file->storeAs($destination_path, $new_file_name, $disk);
+
+                    // 3. Add the public path to the database
+                    $attribute_value[] = $file_path;
+                }
+            }
+        }
+
+        $this->attributes[$attribute_name] = json_encode($attribute_value);
     }
 }

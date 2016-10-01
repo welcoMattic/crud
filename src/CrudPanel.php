@@ -15,10 +15,12 @@ use Backpack\CRUD\PanelTraits\Query;
 use Backpack\CRUD\PanelTraits\Read;
 use Backpack\CRUD\PanelTraits\Reorder;
 use Backpack\CRUD\PanelTraits\Update;
+use Backpack\CRUD\PanelTraits\ViewsAndRestoresRevisions;
+use Backpack\CRUD\PanelTraits\AutoFocus;
 
 class CrudPanel
 {
-    use Create, Read, Update, Delete, Reorder, Access, Columns, Fields, Query, Buttons, AutoSet, FakeFields, FakeColumns;
+    use Create, Read, Update, Delete, Reorder, Access, Columns, Fields, Query, Buttons, AutoSet, FakeFields, FakeColumns, ViewsAndRestoresRevisions, AutoFocus;
 
     // --------------
     // CRUD variables
@@ -34,13 +36,15 @@ class CrudPanel
     public $entity_name = 'entry'; // what name will show up on the buttons, in singural (ex: Add entity)
     public $entity_name_plural = 'entries'; // what name will show up on the buttons, in plural (ex: Delete 5 entities)
 
-    public $access = ['list', 'create', 'update', 'delete'/* 'reorder', 'show', 'details_row' */];
+    public $access = ['list', 'create', 'update', 'delete'/* 'revisions', reorder', 'show', 'details_row' */];
 
     public $reorder = false;
     public $reorder_label = false;
     public $reorder_max_level = 3;
 
     public $details_row = false;
+    public $ajax_table = false;
+    public $export_buttons = false;
 
     public $columns = []; // Define the columns for the table view as an array;
     public $create_fields = []; // Define the fields for the "Add new entry" view as an array;
@@ -48,15 +52,12 @@ class CrudPanel
 
     public $query;
     public $entry;
+    public $buttons;
+    public $db_column_types = [];
+    public $default_page_length = false;
 
     // TONE FIELDS - TODO: find out what he did with them, replicate or delete
-    public $field_types = [];
-
-    public $custom_buttons = [];
-    public $relations = [];
     public $sort = [];
-
-    public $buttons = [''];
 
     // The following methods are used in CrudController or your EntityCrudController to manipulate the variables above.
 
@@ -78,8 +79,6 @@ class CrudPanel
 
         $this->model = new $model_namespace();
         $this->query = $this->model->select('*');
-
-        // $this->setFromDb(); // i think that, by default, the auto-fields functionality should be disabled; otherwise, the workflow changes from "set the fields i need" to "update this crud with whatever i need"; which i personally don't like, because it's more hacky and it assumes you should see what the default offers you, then adapt; I propose we set wether the auto-fields functionality is run for panels with a config variable; the config file should be backpack/crud.php and the variable name should be "autoSetFromDb".
     }
 
     /**
@@ -166,7 +165,7 @@ class CrudPanel
      */
     public function getFirstOfItsTypeInArray($type, $array)
     {
-        return array_first($array, function ($key, $item) use ($type) {
+        return array_first($array, function ($item) use ($type) {
             return $item['type'] == $type;
         });
     }

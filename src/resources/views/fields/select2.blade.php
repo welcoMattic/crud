@@ -1,15 +1,10 @@
 <!-- select2 -->
-  <div class="form-group">
-    <label>{{ $field['label'] }}</label>
+<div @include('crud::inc.field_wrapper_attributes') >
+    <label>{!! $field['label'] !!}</label>
     <?php $entity_model = $crud->model; ?>
     <select
-    	class="form-control select2"
-
-    	@foreach ($field as $attribute => $value)
-            @if (is_string($attribute))
-        		{{ $attribute }}="{{ $value }}"
-            @endif
-    	@endforeach
+    	name="{{ $field['name'] }}"
+        @include('crud::inc.field_attributes', ['default_class' =>  'form-control select2'])
     	>
 
     	@if ($entity_model::isColumnNullable($field['name']))
@@ -18,15 +13,20 @@
 
 	    	@if (isset($field['model']))
 	    		@foreach ($field['model']::all() as $connected_entity_entry)
-	    			<option value="{{ $connected_entity_entry->id }}"
-						@if ( ( old($field['name']) && old($field['name']) == $connected_entity_entry->id ) || (isset($field['value']) && $connected_entity_entry->id==$field['value']))
+	    			<option value="{{ $connected_entity_entry->getKey() }}"
+						@if ( ( old($field['name']) && old($field['name']) == $connected_entity_entry->getKey() ) || (isset($field['value']) && $connected_entity_entry->getKey()==$field['value']))
 							 selected
 						@endif
 	    			>{{ $connected_entity_entry->{$field['attribute']} }}</option>
 	    		@endforeach
 	    	@endif
 	</select>
-  </div>
+
+    {{-- HINT --}}
+    @if (isset($field['hint']))
+        <p class="help-block">{!! $field['hint'] !!}</p>
+    @endif
+</div>
 
 {{-- ########################################## --}}
 {{-- Extra CSS and JS for this particular field --}}

@@ -1,14 +1,14 @@
 <!-- password -->
-  <div class="form-group">
-    <label>{{ $field['label'] }}</label>
+<div @include('crud::inc.field_wrapper_attributes') >
+    <label>{!! $field['label'] !!}</label>
     <input
     	type="password"
-    	class="form-control"
-
-    	@foreach ($field as $attribute => $value)
-            @if (is_string($attribute) && is_string($value) && $attribute!='value')
-        		{{ $attribute }}="{{ $value }}"
-            @endif
-    	@endforeach
+    	name="{{ $field['name'] }}"
+        @include('crud::inc.field_attributes')
     	>
-  </div>
+
+    {{-- HINT --}}
+    @if (isset($field['hint']))
+        <p class="help-block">{!! $field['hint'] !!}</p>
+    @endif
+</div>

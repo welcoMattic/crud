@@ -20,22 +20,22 @@ trait AutoSet
             // $this->labels[$field] = $this->makeLabel($field);
 
             $new_field = [
-                                'name'       => $field,
-                                'label'      => ucfirst($field),
-                                'value'      => null, 'default' => $this->field_types[$field]['default'],
-                                'type'       => $this->getFieldTypeFromDbColumnType($field),
-                                'values'     => [],
-                                'attributes' => [],
-                                ];
-            $this->create_fields[] = $new_field;
-            $this->update_fields[] = $new_field;
+                'name'       => $field,
+                'label'      => ucfirst($field),
+                'value'      => null,
+                'type'       => $this->getFieldTypeFromDbColumnType($field),
+                'values'     => [],
+                'attributes' => [],
+            ];
+            $this->create_fields[$field] = $new_field;
+            $this->update_fields[$field] = $new_field;
 
             if (! in_array($field, $this->model->getHidden())) {
-                $this->columns[] = [
-                                    'name'  => $field,
-                                    'label' => ucfirst($field),
-                                    'type'  => $this->getFieldTypeFromDbColumnType($field),
-                                    ];
+                $this->columns[$field] = [
+                    'name'  => $field,
+                    'label' => ucfirst($field),
+                    'type'  => $this->getFieldTypeFromDbColumnType($field),
+                ];
             }
         }, $this->getDbColumnsNames());
     }
@@ -47,11 +47,15 @@ trait AutoSet
      */
     public function getDbColumnTypes()
     {
-        foreach (\DB::select(\DB::raw('SHOW COLUMNS FROM '.$this->model->getTable())) as $column) {
-            $this->field_types[$column->Field] = ['type' => trim(preg_replace('/\(\d+\)(.*)/i', '', $column->Type)), 'default' => $column->Default];
+        $table_columns = \Schema::getColumnListing($this->model->getTable());
+
+        foreach ($table_columns as $key => $column) {
+            $column_type = \Schema::getColumnType($this->model->getTable(), $column);
+            $this->db_column_types[$column]['type'] = trim(preg_replace('/\(\d+\)(.*)/i', '', $column_type));
+            $this->db_column_types[$column]['default'] = ''; // no way to do this using DBAL?!
         }
 
-        return $this->field_types;
+        return $this->db_column_types;
     }
 
     /**
@@ -63,7 +67,7 @@ trait AutoSet
      */
     public function getFieldTypeFromDbColumnType($field)
     {
-        if (! array_key_exists($field, $this->field_types)) {
+        if (! array_key_exists($field, $this->db_column_types)) {
             return 'text';
         }
 
@@ -75,7 +79,7 @@ trait AutoSet
             return 'email';
         }
 
-        switch ($this->field_types[$field]['type']) {
+        switch ($this->db_column_types[$field]['type']) {
             case 'int':
             case 'smallint':
             case 'mediumint':
@@ -149,6 +153,6 @@ trait AutoSet
         }
 
         // but not updated_at, deleted_at
-        return array_values(array_diff($columns, [$this->model->getKeyName(), 'updated_at', 'deleted_at']));
+        return array_values(array_diff($columns, [$this->model->getKeyName(), 'created_at', 'updated_at', 'deleted_at']));
     }
 }

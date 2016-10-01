@@ -1,14 +1,15 @@
 <!-- html5 color input -->
-  <div class="form-group">
-    <label>{{ $field['label'] }}</label>
+<div @include('crud::inc.field_wrapper_attributes') >
+    <label>{!! $field['label'] !!}</label>
     <input
     	type="color"
-    	class="form-control"
-
-    	@foreach ($field as $attribute => $value)
-            @if (is_string($attribute) && is_string($value))
-    		{{ $attribute }}="{{ $value }}"
-            @endif
-    	@endforeach
+    	name="{{ $field['name'] }}"
+        value="{{ old($field['name']) ? old($field['name']) : (isset($field['value']) ? $field['value'] : (isset($field['default']) ? $field['default'] : '' )) }}"
+        @include('crud::inc.field_attributes')
     	>
-  </div>
+
+    {{-- HINT --}}
+    @if (isset($field['hint']))
+        <p class="help-block">{!! $field['hint'] !!}</p>
+    @endif
+</div>

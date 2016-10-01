@@ -20,6 +20,326 @@ All Notable changes to `Backpack CRUD` will be documented in this file
 - Nothing
 
 
+## [3.1.26] - 2016-09-30
+
+### Fixed
+- bug fix for 'table' field type - you can now have multiple fields on the same form;
+
+
+## [3.1.24] - 2016-09-27
+
+### Added
+- address field type - thanks to [Owen Melbourne](https://github.com/OwenMelbz);
+
+
+## [3.1.23] - 2016-09-27
+
+### Added
+- autoFocus() and autoFocusOnFirstField() - thanks to [Owen Melbourne](https://github.com/OwenMelbz);
+
+
+## [3.1.22] - 2016-09-27
+
+### Fixed
+- checklist and checklist_dependency fields allow html on labels;
+
+
+## [3.1.21] - 2016-09-26
+
+### Added
+- "table" field type - thanks to [Owen Melbourne](https://github.com/OwenMelbz);
+- "multidimensional_array" column type - thanks to [Owen Melbourne](https://github.com/OwenMelbz);
+
+
+## [3.1.20] - 2016-09-26
+
+### Added
+- Non-core CRUD features are now separated into traits;
+
+### Fixed
+- The 'password' field is no longer filtered before the create event;
+- CrudPanels can now be defined in the new EntityCrudController::setup() method;
+
+## [3.1.19] - 2016-09-26
+
+### Fixed
+- AJAX datatables can now have select_multiple columns;
+
+
+## [3.1.18] - 2016-09-25
+
+### Fixed
+- checkbox field has default value;
+
+
+
+## [3.1.17] - 2016-09-25
+
+### Fixed
+- Raw DB queries did not account for DB prefixes;
+
+
+## [3.1.16] - 2016-09-22
+
+### Added
+- Radio field and column - thanks to [Owen Melbourne](https://github.com/OwenMelbz);
+
+
+## [3.1.15] - 2016-09-21
+
+### Fixed
+- Missing $fillable item in model will now throw correct error, because _token is ignored;
+- Correct and complete language files;
+
+
+## [3.1.14] - 2016-09-19
+
+### Fixed
+- Checkbox storing issue in Laravel 5.3 - #115 thanks to [timdiels1](https://github.com/timdiels1);
+
+
+## [3.1.13] - 2016-09-19
+
+### Added
+- Revisions functionality, thanks to [se1exin](https://github.com/se1exin);
+
+
+## [3.1.12] - 2016-09-19
+
+### Added
+- French translation, thanks to [7ute](https://github.com/7ute);
+
+
+## [3.1.11] - 2016-09-19
+
+### Added
+- iconpicker field type;
+
+
+## [3.1.10] - 2016-09-16
+
+### Fixed
+- removeButton and removeButtonFromStack functionality, thanks to [Alexander N](https://github.com/morfin60);
+
+
+## [3.1.9] - 2016-09-16
+
+### Added
+- "prefix" and "suffix" optional attributes on the number and text field types;
+
+
+## [3.1.8] - 2016-09-15
+
+### Fixed
+- upload and upload_multiple can be used for S3 file storage too, by specifying the disk on the field;
+
+
+## [3.1.7] - 2016-09-15
+
+### Added
+- image field type - stores a base64 image from the front-end into a jpg/png file using Intervention/Image;
+
+
+## [3.1.6] - 2016-09-15
+
+### Added
+- upload_multiple field type;
+
+
+## [3.1.5] - 2016-09-14
+
+### Added
+- upload field type;
+
+### Fixed
+- setFromDb() no longer creates a field for created_at;
+
+
+## [3.1.4] - 2016-09-12
+
+### Added
+- Export buttons for CRUDs - to PDF, XLS, CSV and Print, thanks to [Nathaniel Kristofer Schweinberg](https://github.com/nathanielks);
+
+
+## [3.1.3] - 2016-09-12
+
+### Added
+- a "view" field type, which loads a custom view from a specified location; thanks to [Nathaniel Kristofer Schweinberg](https://github.com/nathanielks);
+
+
+## [3.1.2] - 2016-09-12
+
+### Fixed
+- save, update and reorder now replace empty inputs with NULL to allow for MySQL strict mode on (a default in Laravel 5.3) (#94)
+
+
+## [3.1.1] - 2016-09-05
+
+### Added
+- Allow HTML in all field labels (#98)
+
+
+## [3.1.0] - 2016-08-31
+
+### Added
+- Laravel 5.3 support;
+
+
+## [3.0.17] - 2016-08-26
+
+### Fixed
+- adding buttons from views did not work; fixes #93;
+
+
+## [3.0.16] - 2016-08-24
+
+### Fixed
+- Removed recurring comment from list view; Fixes #92;
+- Added check for permission in the CrudController::search() method for allowing the AJAX table only if list is enabled;
+
+
+## [3.0.15] - 2016-08-20
+
+### Fixed
+- Removed double-token input in Create view; Fixes #89;
+
+
+## [3.0.14] - 2016-08-20
+
+### Fixed
+- Fixed AJAX table view with big data sets - was still selecting all rows from the DB; Fixes #87;
+
+
+## [3.0.13] - 2016-08-17
+
+### Fixed
+- Custom pivot table in select2 and select2_multiple fields; Fixes #75;
+
+
+## [3.0.12] - 2016-08-17
+
+### Fixed
+- Reorder view works with custom primary keys; fixes #85;
+- URLs in views now use the backpack.base.route_prefix; fixes #88;
+
+
+## [3.0.11] - 2016-08-12
+
+### Added
+- Spanish translation, thanks to [Rafael Ernesto Ferro González](https://github.com/rafix);
+
+
+## [3.0.10] - 2016-08-09
+
+### Removed
+- PHP dependency, since it's already settled in Backpack\Base, which is a requirement;
+
+
+## [3.0.9] - 2016-08-06
+
+### Added
+- base64_image field type, thanks to [deslittle](https://github.com/deslittle);
+
+
+## [3.0.8] - 2016-08-05
+
+### Added
+- automatic route names for all CRUD::resource() routes;
+
+
+## [3.0.7] - 2016-08-05
+
+### Added
+- PDO Support;
+
+### Removed
+- default column values on the setFromDb() function;
+
+
+## [3.0.6] - 2016-07-31
+
+### Added
+- Bogus unit tests. At least we'be able to use travis-ci for requirements errors, until full unit tests are done.
+
+
+## [3.0.5] - 2016-07-30
+
+### Added
+- Auto-registering the Backpack\Base class;
+- Improved documentation for those who want to just install Backpack\CRUD;
+
+
+## [3.0.4] - 2016-07-30
+
+### Added
+- Auto-registering the Backpack\Base class;
+- Improved documentation for those who want to just install Backpack\CRUD;
+
+
+## [3.0.3] - 2016-07-25
+
+### Added
+- Ctrl+S and Cmd+S submit the form;
+
+
+## [3.0.2] - 2016-07-24
+
+### Added
+- added last parameter to addButton() function which determines wether to add the button to the beginning or end of the stack;
+
+
+## [3.0.1] - 2016-07-23
+
+### Added
+- 'array' column type (stored as JSON in the db); also supports attribute casting;
+- support for attribute casting in Date and Datetime field types;
+
+
+## [3.0.0] - 2016-07-22
+
+### Added
+- wrapperAttributes to all field types, for resizing with col-md-6 and such;
+- 'default' value for most field types;
+- hint to most field types;
+- extendable column types (same as field types, each in their own blade file);
+- 'date' and 'datetime' column types;
+- 'check' column type;
+- button stacks;
+- custom buttons, as views or model_function;
+- registered service providers in order to simplify installation process;
+- configurable number of rows in the table view, by giving a custom value in the config file or in the CRUD panel's constructor;
+
+### Removed
+- "required" functionality with just added asterisks to the fields;
+
+### Fixed
+- renamed the $field_types property to $db_column_types to more accurately describe what it is;
+- issue #58 where select_from_array automatically selected an item with value zero;
+- custom html attributes are now given to the field in a separate array, 'attributes';
+
+
+## ----------------------------------------------------------------------------
+
+
+## [2.0.24] - 2016-07-13
+
+### Added
+- model_function_attribute column type (kudos to [rgreer4](https://github.com/rgreer4))
+
+
+## [2.0.23] - 2016-07-13
+
+### Added
+- Support for $primaryKey variable on the model (no longer dependant on ID as primary key).
+
+
+## [2.0.22] - 2016-06-27
+
+### Fixed
+- Fix removeField method
+- Improve autoSetFromDB method
+
+
 ## [2.0.21] - 2016-06-21
 
 ### Fixed
@@ -163,6 +483,9 @@ All Notable changes to `Backpack CRUD` will be documented in this file
 
 ### Added
 - Call-based API.
+
+
+## ----------------------------------------------------------------------------
 
 
 ## [0.9.10] - 2016-03-17

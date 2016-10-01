@@ -8,21 +8,51 @@ trait Buttons
     // BUTTONS
     // ------------
 
-    // TODO: $this->crud->setButtons(); // default includes edit and delete, with their name, icon, permission, link and class (btn-default)
-    // TODO: $this->crud->addButton();
-    // TODO: $this->crud->removeButton();
-    // TODO: $this->crud->replaceButton();
+    // TODO: $this->crud->reorderButtons('stack_name', ['one', 'two']);
 
-
-
-    // ------------
-    // TONE FUNCTIONS - UNDOCUMENTED, UNTESTED, SOME MAY BE USED
-    // ------------
-    // TODO: check them
-
-    public function addButton($button)
+    /**
+     * Add a button to the CRUD table view.
+     * @param string $stack    Where should the button be visible? Options: top, line, bottom
+     * @param string $name     The name of the button. Unique.
+     * @param string $type     Type of button: view or model_function
+     * @param string $content  The HTML for the button
+     * @param string $position Where in the stack it should be placed: beginning or end
+     */
+    public function addButton($stack, $name, $type, $content, $position = false)
     {
-        array_unshift($this->buttons, $button);
+        if ($position == false) {
+            switch ($stack) {
+                case 'line':
+                    $position = 'beginning';
+                    break;
+
+                default:
+                    $position = 'end';
+                    break;
+            }
+        }
+
+        switch ($position) {
+            case 'beginning':
+                $this->buttons->prepend(new CrudButton($stack, $name, $type, $content));
+                break;
+
+            default:
+                $this->buttons->push(new CrudButton($stack, $name, $type, $content));
+                break;
+        }
+    }
+
+    public function addButtonFromModelFunction($stack, $name, $model_function_name, $position = false)
+    {
+        $this->addButton($stack, $name, 'model_function', $model_function_name, $position);
+    }
+
+    public function addButtonFromView($stack, $name, $view, $position = false)
+    {
+        $view = 'vendor.backpack.crud.buttons.'.$view;
+
+        $this->addButton($stack, $name, 'view', $view, $position);
     }
 
     public function buttons()
@@ -30,37 +60,48 @@ trait Buttons
         return $this->buttons;
     }
 
-    public function addCustomButton($button)
-    {
-        array_unshift($this->custom_buttons, $button);
-    }
-
-    public function customButtons()
-    {
-        return $this->custom_buttons;
-    }
-
-    public function showButtons()
-    {
-        return ! empty($this->buttons) && ! (count($this->buttons) == 1 && array_key_exists('add', $this->buttons));
-    }
-
     public function initButtons()
     {
-        $this->buttons = [
-            'add'    => ['route' => "{$this->route}/create", 'label' => trans('crud::crud.buttons.add'), 'class' => '', 'hide' => [], 'icon' => 'fa-plus-circle', 'extra' => []],
-            'view'   => ['route' => "{$this->route}/%d", 'label' => trans('crud::crud.buttons.view'), 'class' => '', 'hide' => [], 'icon' => 'fa-eye', 'extra' => []],
-            'edit'   => ['route' => "{$this->route}/%d/edit", 'label' => trans('crud::crud.buttons.edit'), 'class' => '', 'hide' => [], 'icon' => 'fa-edit', 'extra' => []],
-            'delete' => ['route' => "{$this->route}/%d", 'label' => trans('crud::crud.buttons.delete'), 'class' => '', 'hide' => [], 'icon' => 'fa-trash', 'extra' => ['data-confirm' => trans('crud::crud.confirm.delete'), 'data-type' => 'delete']],
-        ];
+        $this->buttons = collect();
+
+        // line stack
+        $this->addButton('line', 'preview', 'view', 'crud::buttons.preview', 'end');
+        $this->addButton('line', 'update', 'view', 'crud::buttons.update', 'end');
+        $this->addButton('line', 'revisions', 'view', 'crud::buttons.revisions', 'end');
+        $this->addButton('line', 'delete', 'view', 'crud::buttons.delete', 'end');
+
+        // top stack
+        $this->addButton('top', 'create', 'view', 'crud::buttons.create');
+        $this->addButton('top', 'reorder', 'view', 'crud::buttons.reorder');
     }
 
-    public function removeButtons($buttons)
+    public function removeButton($name)
     {
-        foreach ($buttons as $button) {
-            unset($this->buttons[$button]);
-        }
+        $this->buttons = $this->buttons->reject(function ($button) use ($name) {
+            return $button->name == $name;
+        });
+    }
 
-        return $this->buttons;
+    public function removeButtonFromStack($name, $stack)
+    {
+        $this->buttons = $this->buttons->reject(function ($button) use ($name, $stack) {
+            return $button->name == $name && $button->stack == $stack;
+        });
+    }
+}
+
+class CrudButton
+{
+    public $stack;
+    public $name;
+    public $type = 'view';
+    public $content;
+
+    public function __construct($stack, $name, $type, $content)
+    {
+        $this->stack = $stack;
+        $this->name = $name;
+        $this->type = $type;
+        $this->content = $content;
     }
 }

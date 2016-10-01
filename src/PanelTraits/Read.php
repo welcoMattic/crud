@@ -67,6 +67,22 @@ trait Read
     }
 
     /**
+     * Check if the create/update form has upload fields.
+     * Upload fields are the ones that have "upload" => true defined on them.
+     * @param  [form] create / update / both - defaults to 'both'
+     * @return bool
+     */
+    public function hasUploadFields($form)
+    {
+        $fields = $this->getFields($form);
+        $upload_fields = array_where($fields, function ($value, $key) {
+            return isset($value['upload']) && $value['upload'] == true;
+        });
+
+        return count($upload_fields) ? true : false;
+    }
+
+    /**
      * Enable the DETAILS ROW functionality:.
      *
      * In the table view, show a plus sign next to each entry.
@@ -83,5 +99,115 @@ trait Read
     public function disableDetailsRow()
     {
         $this->details_row = false;
+    }
+
+    /**
+     * Set the number of rows that should be show on the table page (list view).
+     */
+    public function setDefaultPageLength($value)
+    {
+        $this->default_page_length = $value;
+    }
+
+    /**
+     * Get the number of rows that should be show on the table page (list view).
+     */
+    public function getDefaultPageLength()
+    {
+        // return the custom value for this crud panel, if set using setPageLength()
+        if ($this->default_page_length) {
+            return $this->default_page_length;
+        }
+
+        // otherwise return the default value in the config file
+        if (config('backpack.crud.default_page_length')) {
+            return config('backpack.crud.default_page_length');
+        }
+
+        return 25;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    |                                AJAX TABLE
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Tell the list view to use AJAX for loading multiple rows.
+     */
+    public function enableAjaxTable()
+    {
+        $this->ajax_table = true;
+    }
+
+    /**
+     * Check if ajax is enabled for the table view.
+     * @return bool
+     */
+    public function ajaxTable()
+    {
+        return $this->ajax_table;
+    }
+
+    /**
+     * Get the HTML of the cells in a table row, for a certain DB entry.
+     * @param  Entity $entry A db entry of the current entity;
+     * @return array         Array of HTML cell contents.
+     */
+    public function getRowViews($entry)
+    {
+        $response = [];
+        foreach ($this->columns as $key => $column) {
+            $response[] = $this->getCellView($column, $entry);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Get the HTML of a cell, using the column types.
+     * @param  array $column
+     * @param  Entity $entry   A db entry of the current entity;
+     * @return HTML
+     */
+    public function getCellView($column, $entry)
+    {
+        if (! isset($column['type'])) {
+            return \View::make('crud::columns.text')->with('crud', $this)->with('column', $column)->with('entry', $entry)->render();
+        } else {
+            if (view()->exists('vendor.backpack.crud.columns.'.$column['type'])) {
+                return \View::make('vendor.backpack.crud.columns.'.$column['type'])->with('crud', $this)->with('column', $column)->with('entry', $entry)->render();
+            } else {
+                if (view()->exists('crud::columns.'.$column['type'])) {
+                    return \View::make('crud::columns.'.$column['type'])->with('crud', $this)->with('column', $column)->with('entry', $entry)->render();
+                } else {
+                    return \View::make('crud::columns.text')->with('crud', $this)->with('column', $column)->with('entry', $entry)->render();
+                }
+            }
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    |                                EXPORT BUTTONS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Tell the list view to show the DataTables export buttons.
+     */
+    public function enableExportButtons()
+    {
+        $this->export_buttons = true;
+    }
+
+    /**
+     * Check if export buttons are enabled for the table view.
+     * @return bool
+     */
+    public function exportButtons()
+    {
+        return $this->export_buttons;
     }
 }
